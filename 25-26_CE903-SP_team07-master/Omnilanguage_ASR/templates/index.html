@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASR Transcriber — ASR Pro</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="page-wrapper">
+
+        <!-- HEADER -->
+        <header>
+            <div class="logo-mark">
+                <div class="logo-icon">🎙</div>
+                <div class="logo-text">ASR<span>Pro</span></div>
+            </div>
+            <div class="header-badge">WHISPER V3-TURBO · LOCAL</div>
+        </header>
+
+        <!-- HERO -->
+        <section class="hero">
+            <div class="glow-orb left"></div>
+            <div class="glow-orb right"></div>
+            <div class="hero-eyebrow">Next-Generation Speech Recognition</div>
+            <h1 class="hero-title">
+                <span class="word-asr">ASR</span>
+                <span class="word-transcriber">Transcriber</span>
+            </h1>
+            <p class="hero-sub">Premium accuracy with local inference. Zero data leaves your machine.</p>
+            <div class="hero-model-tag">⚡ whisper-large-v3-turbo · ~796M params</div>
+        </section>
+
+        <!-- MAIN CARD -->
+        <div class="main-card">
+
+            <!-- TOOLBAR -->
+            <div class="toolbar">
+                <div class="toolbar-section">
+                    <span class="toolbar-label">Language</span>
+                    <div class="lang-select-wrap">
+                        <select class="lang-select" id="langSelect">
+                            <option value="Auto-detect">Auto-detect</option>
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Marathi">Marathi</option>
+                            <option value="Bengali">Bengali</option>
+                            <option value="Urdu">Urdu</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                        </select>
+                        <span class="lang-arrow">▾</span>
+                    </div>
+                </div>
+
+                <div class="toolbar-section grow"></div>
+
+                <div class="toolbar-section">
+                    <span class="toolbar-label">Shortcuts</span>
+                    <span class="kbd">⌘T</span><span style="font-size:10px;color:var(--text-dim)">Transcribe</span>
+                    <span class="kbd">⌘R</span><span style="font-size:10px;color:var(--text-dim)">Record</span>
+                </div>
+            </div>
+
+            <!-- MAIN INPUT GRID -->
+            <div class="main-grid">
+                <!-- LEFT: File Upload -->
+                <div class="panel">
+                    <div class="panel-label">Audio Input</div>
+                    <div class="drop-zone" id="dropZone">
+                        <input type="file" id="fileInput" accept="audio/*,video/*" style="display:none">
+                        <div class="drop-icon" id="dropIcon">📂</div>
+                        <div class="drop-filename" id="dropFilename">Drop audio file here</div>
+                        <div class="drop-hint" id="dropHint">or click to browse</div>
+                        <div class="drop-formats">
+                            <span class="fmt-tag">M4A</span>
+                            <span class="fmt-tag">MP3</span>
+                            <span class="fmt-tag">WAV</span>
+                            <span class="fmt-tag">FLAC</span>
+                            <span class="fmt-tag">OGG</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Reference -->
+                <div class="panel">
+                    <div class="panel-label">Reference Text <span style="opacity:0.5;font-size:9px">(optional — for
+                            WER/CER)</span></div>
+                    <textarea class="ref-textarea" id="refText"
+                        placeholder="Paste ground truth transcription here to evaluate Word Error Rate and Character Error Rate against the model's output..."></textarea>
+                </div>
+            </div>
+
+            <!-- ACTION ROW -->
+            <div class="action-row">
+                <button class="btn btn-record" id="recordBtn">
+                    <div class="record-dot"></div>
+                    <span id="recordLabel">Record Live</span>
+                </button>
+                <button class="btn btn-transcribe" id="transcribeBtn">
+                    <span class="btn-icon" id="transcribeIcon">⚡</span>
+                    <span id="transcribeLabel">Transcribe</span>
+                </button>
+            </div>
+
+            <!-- METRICS BAR -->
+            <div class="metrics-bar">
+                <div class="metric-cell">
+                    <div class="metric-name">WER Score</div>
+                    <div class="metric-value muted" id="werDisplay">—</div>
+                    <div class="metric-sub">Word Error Rate</div>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-name">CER Score</div>
+                    <div class="metric-value muted" id="cerDisplay">—</div>
+                    <div class="metric-sub">Char Error Rate</div>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-name">Duration</div>
+                    <div class="metric-value muted" id="durationDisplay">—</div>
+                    <div class="metric-sub">Audio length</div>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-name">Confidence</div>
+                    <div class="metric-value muted" id="confDisplay">—</div>
+                    <div class="metric-sub">Model score</div>
+                </div>
+            </div>
+
+            <!-- WER DETAIL -->
+            <div class="wer-detail" id="werDetail">
+                <div class="wer-block">
+                    <div class="wer-block-title">Word Error Rate</div>
+                    <div class="wer-numbers" id="werBig">—</div>
+                    <div class="wer-bar-track">
+                        <div class="wer-bar-fill" id="werBar" style="width:0%"></div>
+                    </div>
+                </div>
+                <div class="wer-block">
+                    <div class="wer-block-title">Character Error Rate</div>
+                    <div class="wer-numbers" id="cerBig">—</div>
+                    <div class="wer-bar-track">
+                        <div class="wer-bar-fill warn" id="cerBar" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSCRIPT HEADER -->
+            <div class="transcript-header">
+                <div class="transcript-title">
+                    Transcription Result
+                    <div class="transcript-status idle" id="statusBadge">
+                        <div class="status-dot"></div>
+                        <span id="statusText">Idle</span>
+                    </div>
+                </div>
+                <div class="transcript-actions">
+                    <div class="icon-btn" title="Copy" id="copyBtn">⎘</div>
+                    <div class="icon-btn" title="Clear" id="clearBtn">✕</div>
+                </div>
+            </div>
+
+            <!-- TRANSCRIPT BODY -->
+            <div class="transcript-body" id="transcriptBody">
+                <div class="transcript-placeholder" id="transcriptPlaceholder">
+                    <div class="placeholder-icon">🎙</div>
+                    <div class="placeholder-text">Upload audio or record to begin transcription</div>
+                </div>
+            </div>
+
+            <!-- TRANSLATION PANEL (Hidden until needed) -->
+            <div id="translationPanel" class="hidden border-t border-[var(--border)]">
+                <div class="transcript-header">
+                    <div class="transcript-title">Translation Result</div>
+                    <div class="transcript-actions">
+                        <div class="icon-btn" title="Copy" id="copyTransBtn">⎘</div>
+                    </div>
+                </div>
+                <div class="transcript-body italic text-[var(--accent2)]" id="translationBody"></div>
+            </div>
+
+            <!-- WAVEFORM STRIP -->
+            <div class="waveform-strip" id="waveformStrip" style="display:none">
+                <button class="play-btn" id="playBtn">▶</button>
+                <span class="time-label" id="currentTime">0:00</span>
+                <div class="waveform-canvas-wrap">
+                    <canvas id="waveform-canvas"></canvas>
+                </div>
+                <span class="time-label" id="totalTime">0:00</span>
+            </div>
+
+            <!-- SEGMENT CHIPS -->
+            <div class="segment-row" id="segmentRow" style="display:none">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- SETTINGS TOGGLE -->
+            <div class="settings-row" id="settingsToggle">
+                <div class="settings-toggle-label">⚙ Advanced Settings</div>
+                <div class="chevron" id="settingsChevron">▾</div>
+            </div>
+            <div class="settings-drawer" id="settingsDrawer">
+                <div class="settings-inner">
+                    <div class="setting-item">
+                        <label>Translation</label>
+                        <select class="setting-select" id="transSelect">
+                            <option value="None">None</option>
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Marathi">Marathi</option>
+                            <option value="Bengali">Bengali</option>
+                            <option value="Urdu">Urdu</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Beam Size</label>
+                        <select class="setting-select" id="beamSelect">
+                            <option value="1">1 (Fast)</option>
+                            <option value="5" selected>5 (Balanced)</option>
+                            <option value="10">10 (Precise)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Temperature</label>
+                        <input type="number" class="setting-input" id="tempInput" value="0.0" min="0" max="1"
+                            step="0.1">
+                    </div>
+                    <div class="setting-item">
+                        <label>VAD Filter</label>
+                        <div class="toggle-group" id="vadToggle">
+                            <div class="toggle-opt active" data-val="on">On</div>
+                            <div class="toggle-opt" data-val="off">Off</div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label>Timestamps</label>
+                        <div class="toggle-group" id="tsToggle">
+                            <div class="toggle-opt active" data-val="segment">Segment</div>
+                            <div class="toggle-opt" data-val="word">Word</div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label>Output Format</label>
+                        <select class="setting-select" id="formatSelect">
+                            <option value="json">JSON</option>
+                            <option value="srt">SRT</option>
+                            <option value="vtt">VTT</option>
+                            <option value="txt">TXT</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD FOOTER / EXPORT -->
+            <div class="card-footer">
+                <div class="footer-info">
+                    Model: <span>whisper-large-v3-turbo</span> · Device: <span id="deviceLabel">CPU</span>
+                </div>
+                <div class="export-btns">
+                    <button class="export-btn" id="exportTxt">↓ TXT</button>
+                    <button class="export-btn" id="exportSrt">↓ SRT</button>
+                    <button class="export-btn" id="exportJson">↓ JSON</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast"><span class="toast-icon" id="toastIcon">✓</span><span id="toastMsg">Copied to clipboard</span></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>
